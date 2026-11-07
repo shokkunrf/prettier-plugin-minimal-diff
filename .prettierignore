@@ -1,0 +1,3 @@
+# Inputs and expected outputs, kept byte for byte
+test/fixtures/
+package-lock.json

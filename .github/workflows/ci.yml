@@ -1,0 +1,80 @@
+name: "CI: Test Plugin"
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+  schedule:
+    # Weekly, to catch Prettier releases that break the plugin
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 26
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Check formatting
+        run: npm run format:check
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Oldest supported, the last patch of each minor, and upcoming releases
+        prettier:
+          - 3.0.0
+          - 3.1.1
+          - 3.2.5
+          - 3.3.3
+          - 3.4.2
+          - 3.5.3
+          - 3.6.2
+          - 3.7.4
+          - 3.8.5
+          - 3.9.10
+          - latest
+          - next
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 26
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Build with the pinned Prettier's types, then test on the matrix version.
+      - name: Build
+        run: npm run build
+
+      - name: Install Prettier ${{ matrix.prettier }}
+        env:
+          VERSION: ${{ matrix.prettier }}
+        run: npm install --no-save "prettier@$VERSION"
+
+      - name: Test
+        run: npm run test:run
