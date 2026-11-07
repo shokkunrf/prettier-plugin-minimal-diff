@@ -13,6 +13,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import * as prettier from "prettier";
+import * as markdown from "prettier/plugins/markdown";
 
 import * as plugin from "../src/index.mts";
 
@@ -91,6 +92,54 @@ for (const input of inputs) {
     });
   }
 }
+
+const pragmaSamples = [
+  "# a\n",
+  "<!-- @format -->\n\n# a\n",
+  "<!-- @prettier -->\n# a\n",
+  "\n\n  <!-- @format -->\n",
+  "# a\n\n<!-- @format -->\n",
+  "<!--\n  @format\n-->\n",
+  "{/* @prettier */}\n",
+  "---\ntitle: x\n---\n\n<!-- @format -->\n",
+  "---\ntitle: x\n...\n<!-- @format -->\n",
+  "+++\ntitle = 'x'\n+++\n<!-- @format -->\n",
+  "---toml\ntitle = 'x'\n...\n<!-- @format -->\n",
+  "<!-- @noformat -->\n",
+  "<!-- @noprettier -->\n# a\n",
+  "---\na: 1\n---\n<!-- @noformat -->\n",
+];
+
+test("pragma checks match Prettier's Markdown parsers", async () => {
+  for (const [name, builtin] of Object.entries(markdown.parsers)) {
+    const ours = plugin.parsers[name];
+    assert.ok(ours, `parser ${name} is wrapped`);
+    for (const text of pragmaSamples) {
+      assert.equal(
+        ours.hasPragma?.(text),
+        builtin.hasPragma?.(text),
+        `${name} hasPragma ${JSON.stringify(text)}`,
+      );
+      if (builtin.hasIgnorePragma) {
+        assert.equal(
+          ours.hasIgnorePragma?.(text),
+          builtin.hasIgnorePragma(text),
+          `${name} hasIgnorePragma ${JSON.stringify(text)}`,
+        );
+      }
+    }
+  }
+});
+
+test("requirePragma skips files without a pragma", async () => {
+  const text = "| a | bb |\n|-|-|\n";
+  const options = { requirePragma: true, markdownTableStyle: "compact" };
+  assert.equal(await format(text, "a.md", options), text);
+  assert.equal(
+    await format(`<!-- @format -->\n\n${text}`, "a.md", options),
+    "<!-- @format -->\n\n| a | bb |\n| --- | --- |\n",
+  );
+});
 
 test("plugin can be passed as a module object", async () => {
   const actual = await prettier.format("| a | bb |\n|-|-|\n", {
