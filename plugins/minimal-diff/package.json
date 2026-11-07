@@ -1,6 +1,6 @@
 {
   "name": "prettier-plugin-minimal-diff",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Prettier plugin that adds options for output with smaller diffs",
   "license": "MIT",
