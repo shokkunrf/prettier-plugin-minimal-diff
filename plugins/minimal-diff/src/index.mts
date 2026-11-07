@@ -33,9 +33,14 @@ const DELIMITERS: Record<string, string> = {
   center: ":-:",
 };
 
+const FRONT_MATTER =
+  /^(?<start>-{3}|\+{3})(?<language>[^\n]*)\n(?:|.*?\n)(?<end>\k<start>|\.{3})[^\S\n]*(?:\n|$)/s;
+
 function createParser(name: string): Parser<Node> {
   const parser: Parser<Node> = {
     astFormat: "mdast",
+    hasPragma: (text) => startsWithPragma(text, "format|prettier"),
+    hasIgnorePragma: (text) => startsWithPragma(text, "noformat|noprettier"),
     locStart: (node) => node.position.start.offset,
     locEnd: (node) => node.position.end.offset,
     async parse(text, options: Options) {
@@ -94,6 +99,23 @@ function printRow(cells: Doc[]): Doc {
 
 function join(separator: Doc, docs: Doc[]): Doc[] {
   return docs.flatMap((doc, index) => (index === 0 ? [doc] : [separator, doc]));
+}
+
+// Prettier checks pragmas before parsing, so this mirrors its Markdown check.
+function startsWithPragma(text: string, names: string): boolean {
+  const pragma = new RegExp(
+    `<!--\\s*@(?:${names})\\s*-->|\\{\\s*\\/\\*\\s*@(?:${names})\\s*\\*\\/\\s*\\}|<!--.*\\r?\\n[\\s\\S]*(^|\\n)[^\\S\\n]*@(?:${names})[^\\S\\n]*($|\\n)[\\s\\S]*\\n.*-->`,
+    "m",
+  );
+  return stripFrontMatter(text).trimStart().match(pragma)?.index === 0;
+}
+
+function stripFrontMatter(text: string): string {
+  const match = text.match(FRONT_MATTER);
+  if (!match?.groups) return text;
+  const { start, language, end } = match.groups;
+  const yaml = start === "---" && ["", "yaml"].includes(language.trim());
+  return yaml || start === end ? text.slice(match[0].length) : text;
 }
 
 export const options: SupportOptions = {
