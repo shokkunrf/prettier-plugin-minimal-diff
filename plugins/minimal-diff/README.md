@@ -35,7 +35,7 @@ Works without `package.json`, for example with a globally installed Prettier.
 ```sh
 mkdir -p .prettier
 curl -fsSL -o .prettier/minimal-diff.mjs \
-  https://github.com/shokkunrf/prettier-plugins/releases/download/minimal-diff/v0.1.0/prettier-plugin-minimal-diff.mjs
+  https://github.com/shokkunrf/prettier-plugins/releases/download/minimal-diff/v1.0.0/prettier-plugin-minimal-diff.mjs
 echo ".prettier/" >> .prettierignore
 ```
 
@@ -51,7 +51,7 @@ Relative plugin paths in a config file are resolved from that file. Ignoring `.p
 ### npm package
 
 ```sh
-npm install --save-dev https://github.com/shokkunrf/prettier-plugins/releases/download/minimal-diff/v0.1.0/prettier-plugin-minimal-diff-0.1.0.tgz
+npm install --save-dev https://github.com/shokkunrf/prettier-plugins/releases/download/minimal-diff/v1.0.0/prettier-plugin-minimal-diff-1.0.0.tgz
 ```
 
 ```json
