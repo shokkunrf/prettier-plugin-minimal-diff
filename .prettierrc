@@ -1,0 +1,4 @@
+{
+  "plugins": ["./plugins/minimal-diff/src/index.mts"],
+  "markdownTableStyle": "compact"
+}
