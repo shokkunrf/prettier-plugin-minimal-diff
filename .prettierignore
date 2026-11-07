@@ -1,0 +1,2 @@
+plugins/*/test/fixtures/
+plugins/*/package-lock.json
