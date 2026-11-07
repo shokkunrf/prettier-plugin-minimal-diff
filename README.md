@@ -22,6 +22,11 @@ Tests load the TypeScript source directly. To test another Prettier version, run
 
 This repository formats itself with minimal-diff (see `.prettierrc`). To check formatting, run `plugins/minimal-diff/node_modules/.bin/prettier --check .` from the repository root.
 
+## Releasing
+
+1. Bump `version` in `plugins/<name>/package.json`.
+2. Create a GitHub release with the tag `<name>/v<version>`, such as `minimal-diff/v0.1.0`. The CD workflow tests the tag and uploads `<package>.mjs`, `<package>-<version>.tgz`, and `SHA256SUMS`.
+
 ## License
 
 [MIT](LICENSE)
