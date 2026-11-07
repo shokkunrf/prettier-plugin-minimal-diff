@@ -20,6 +20,8 @@ npm run build # Writes dist/index.mjs, the release file
 
 Tests load the TypeScript source directly. To test another Prettier version, run `npm install --no-save prettier@<version>` before `npm test`.
 
+CI checks formatting and runs each plugin's tests on the latest Prettier and the one bundled with the VS Code Prettier extension, on pushes, pull requests, and weekly. When adding a plugin, add it to the test matrix in `.github/workflows/plugins-ci.yml`.
+
 This repository formats itself with minimal-diff (see `.prettierrc`). To check formatting, run `plugins/minimal-diff/node_modules/.bin/prettier --check .` from the repository root.
 
 ## License
