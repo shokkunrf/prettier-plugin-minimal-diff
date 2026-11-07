@@ -1,0 +1,78 @@
+name: "CI: Test Plugins"
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+  schedule:
+    # Weekly, to catch Prettier releases that break a plugin
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 26
+          cache: npm
+          cache-dependency-path: plugins/minimal-diff/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --prefix plugins/minimal-diff
+
+      - name: Check formatting
+        run: plugins/minimal-diff/node_modules/.bin/prettier --check .
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin:
+          - minimal-diff
+        prettier:
+          - latest
+          - 3.7.4 # Bundled with the VS Code extension (prettier-vscode 12.4.0)
+    defaults:
+      run:
+        working-directory: plugins/${{ matrix.plugin }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 26
+          cache: npm
+          cache-dependency-path: plugins/${{ matrix.plugin }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Prettier ${{ matrix.prettier }}
+        env:
+          VERSION: ${{ matrix.prettier }}
+        run: npm install --no-save "prettier@$VERSION"
+
+      - name: Test
+        run: npm test
+
+      - name: Test the built plugin
+        run: npm run test:dist

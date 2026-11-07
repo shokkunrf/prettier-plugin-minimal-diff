@@ -1,0 +1,31 @@
+{
+  "name": "prettier-plugin-minimal-diff",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prettier plugin that adds options for output with smaller diffs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shokkunrf/prettier-plugins.git",
+    "directory": "plugins/minimal-diff"
+  },
+  "type": "module",
+  "exports": "./dist/index.mjs",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc",
+    "test": "node --test",
+    "test:dist": "prettier --no-config --plugin=./dist/index.mjs --markdown-table-style=compact --check \"test/fixtures/*.compact.*\""
+  },
+  "peerDependencies": {
+    "prettier": ">=3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "prettier": "3.9.10",
+    "typescript": "7.0.2"
+  }
+}

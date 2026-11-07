@@ -1,0 +1,67 @@
+name: "CD: Release Plugin"
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to re-run (e.g., minimal-diff/v0.1.0)"
+        required: true
+        type: string
+
+concurrency:
+  group: cd-${{ github.event.release.tag_name || inputs.tag }}
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          persist-credentials: false
+
+      - name: Resolve plugin from tag
+        run: |
+          NAME=${TAG%/v*}
+          if [ "$(jq -r .version "plugins/$NAME/package.json")" != "${TAG#*/v}" ]; then
+            echo "::error::Tag '$TAG' does not match the version in plugins/$NAME/package.json"
+            exit 1
+          fi
+          echo "DIR=plugins/$NAME" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 26
+          cache: npm
+          cache-dependency-path: ${{ env.DIR }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.DIR }}
+        run: npm ci
+
+      - name: Test
+        working-directory: ${{ env.DIR }}
+        run: npm test
+
+      - name: Build assets
+        working-directory: ${{ env.DIR }}
+        run: |
+          npm run build
+          npm run test:dist
+          cp ../../LICENSE .
+          mkdir assets
+          cp dist/index.mjs "assets/$(jq -r .name package.json).mjs"
+          npm pack --pack-destination assets
+          cd assets && sha256sum -- * > SHA256SUMS
+
+      - name: Upload assets
+        working-directory: ${{ env.DIR }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" assets/* --clobber --repo "$GITHUB_REPOSITORY"
