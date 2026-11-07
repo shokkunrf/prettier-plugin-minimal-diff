@@ -1,0 +1,58 @@
+name: "CD: Upload Release Assets"
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to re-run (e.g., v0.1.0)"
+        required: true
+        type: string
+
+concurrency:
+  group: cd-${{ github.event.release.tag_name || inputs.tag }}
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 26
+          cache: npm
+
+      - name: Check tag matches package.json
+        run: |
+          VERSION=$(node -p 'require("./package.json").version')
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "::error::Tag '$TAG' does not match package.json version '$VERSION'"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build assets
+        run: |
+          mkdir assets
+          cp dist/index.mjs assets/prettier-plugin-minimal-diff.mjs
+          npm pack --pack-destination assets
+          cd assets && sha256sum -- * > SHA256SUMS
+
+      - name: Upload assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" assets/* --clobber --repo "$GITHUB_REPOSITORY"

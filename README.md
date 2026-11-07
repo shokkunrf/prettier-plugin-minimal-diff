@@ -91,6 +91,11 @@ npm install --no-save prettier@<version>
 npm run test:run
 ```
 
+## Releasing
+
+1. Bump `version` in `package.json`.
+2. Create a GitHub release with the tag `v<version>`. The CD workflow tests the tag and uploads `prettier-plugin-minimal-diff.mjs`, `prettier-plugin-minimal-diff-<version>.tgz`, and `SHA256SUMS`.
+
 ## Alternatives
 
 - [@dvyio/prettier-plugin-collapse-markdown-tables](https://www.npmjs.com/package/@dvyio/prettier-plugin-collapse-markdown-tables) prints similar tables (`:---` where this plugin prints `:--`). It rewrites Prettier's printed text and imports `prettier` as a peer dependency.
