@@ -10,6 +10,16 @@
     "directory": "plugins/minimal-diff"
   },
   "type": "module",
+  "exports": "./dist/index.mjs",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc",
+    "test": "node --test",
+    "test:dist": "prettier --no-config --plugin=./dist/index.mjs --markdown-table-style=compact --check \"test/fixtures/*.compact.*\""
+  },
   "peerDependencies": {
     "prettier": ">=3.0.0"
   },
